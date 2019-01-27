@@ -2,6 +2,8 @@ const express = require('express'); // brings in module installed
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
+const flash = require('connect-flash');
+const session = require('express-session');
 const mongoose = require('mongoose');
 
 const app = express(); // initializes application 
@@ -34,6 +36,23 @@ app.use(bodyParser.json())
 
 // Method Override Middleware
 app.use(methodOverride('_method'))
+
+//Express Session Middleware
+app.use(session({
+  secret: 'secret',
+  resave: true,
+  saveUninitialized: true
+}))
+
+app.use(flash());
+
+// Global Variables
+app.use(function (req, res, next) {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  res.locals.error = req.flash('error');
+  next();
+});
 
 /* Index Route
 / - takes you to the home url, in this case, it is localhost:5000
@@ -103,6 +122,7 @@ app.post('/ideas', (req, res) => {
     new Idea (newUser)
       .save()
       .then(idea => {
+        req.flash('success_msg', 'Successfully Added')
         res.redirect('/ideas');
       })
   }
@@ -119,16 +139,18 @@ app.put('/ideas/:id', (req, res) => {
 
     idea.save()
       .then(idea => {
-        res.redirect('/ideas')
+        req.flash('success_msg', 'Idea successfully editted!')
+        res.redirect('/ideas');
       })
   })
 })
 
 // Delete Ideas
 app.delete('/ideas/:id' , (req, res) => {
-  Idea.remove({_id: req.params.id})
+  Idea.deleteOne({_id: req.params.id})
     .then(() => {
-      res.redirect('/ideas')
+      req.flash('success_msg', 'Successfully Removed!');
+      res.redirect('/ideas');
     })
 })
 
